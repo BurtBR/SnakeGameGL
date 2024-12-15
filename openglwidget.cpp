@@ -1,36 +1,181 @@
 #include "openglwidget.h"
 
+#include <QRandomGenerator>
+
 
 OpenGLWidget::OpenGLWidget(QWidget *parent) : QOpenGLWidget(parent), QOpenGLFunctions(){
 }
 
 OpenGLWidget::~OpenGLWidget(){
 
+    if(_timer){
+        delete _timer;
+        _timer = nullptr;
+    }
+
 }
 
 void OpenGLWidget::initializeGL(){
 
-    float aspect = this->width()/this->height();
+    qsizetype snakefatness = 3;
 
     initializeOpenGLFunctions();
 
-    glOrtho(0, 100 * aspect, 0, 100 * aspect, 1.0, -1.0);
+    glOrtho(_space.left(), (_space.right()+1), _space.bottom()+1, (_space.top()), 1.0, -1.0);
     glClearColor(0.5,0.5,0.5,1.0);
-    glPointSize(10);
+    //glPointSize(1);
+
+    _direction = Direction::right;
+    _snake = CastSnake(5, snakefatness, _direction, _space);
+
+    if(!_timer){
+        try{
+            _timer = new QTimer;
+        }catch(...){
+            return;
+        }
+
+        connect(_timer, &QTimer::timeout, this, &OpenGLWidget::TickTimeout);
+        _timer->start(100);
+    }
 }
 
 void OpenGLWidget::paintGL(){
 
-    test++;
-
     glClear(GL_COLOR_BUFFER_BIT);
-    glColor3f(1.0, 0.0 ,0.0);
-    glBegin(GL_POINTS);
-    glVertex3f(test%100 , test%100, 0);
-    glVertex3f(test%100, 20+test%100, 0);
-    glVertex3f( 10+test%100, 10+test%100, 0);
-    glEnd();
 
+    if(_snake.size()){
+        // Head
+        glColor3f(1.0, 0.0 ,0.0);
 
+        glBegin(GL_TRIANGLES);
+        switch(_direction){
+        case Direction::right:
+            glVertex3i(_snake[0].left(), _snake[0].top(), 0);
+            glVertex3i(_snake[0].left(), _snake[0].bottom()+1, 0);
+            glVertex3i(_snake[0].right()+1, _snake[0].center().y()+1, 0);
+            break;
+
+        case Direction::left:
+            glVertex3i(_snake[0].right()+1, _snake[0].top(), 0);
+            glVertex3i(_snake[0].right()+1, _snake[0].bottom()+1, 0);
+            glVertex3i(_snake[0].left(), _snake[0].center().y()+1, 0);
+            break;
+
+        case Direction::down:
+            glVertex3i(_snake[0].left(), _snake[0].top(), 0);
+            glVertex3i(_snake[0].right()+1, _snake[0].top(), 0);
+            glVertex3i(_snake[0].center().x()+1, _snake[0].bottom()+1, 0);
+            break;
+
+        case Direction::up:
+            glVertex3i(_snake[0].left(), _snake[0].bottom()+1, 0);
+            glVertex3i(_snake[0].right()+1, _snake[0].bottom()+1, 0);
+            glVertex3i(_snake[0].center().x()+1, _snake[0].top(), 0);
+            break;
+
+        default:
+            break;
+        }
+
+        for(int i=1; i<_snake.size() ;i++){
+            glVertex3i(_snake[i].left(), _snake[i].top(), 0);
+            glVertex3i(_snake[i].left(), _snake[i].bottom()+1, 0);
+            glVertex3i(_snake[i].right()+1, _snake[i].top(), 0);
+
+            glVertex3i(_snake[i].left(), _snake[i].bottom()+1, 0);
+            glVertex3i(_snake[i].right()+1, _snake[i].bottom()+1, 0);
+            glVertex3i(_snake[i].right()+1, _snake[i].top(), 0);
+        }
+        glEnd();
+    }
+}
+
+void OpenGLWidget::MoveSnake(qsizetype step){
+
+    if(!_snake.size())
+        return;
+
+    Direction currdir = _direction;
+    QPoint position;
+
+    for(int i=0; i<_snake.size() ;i++){
+        position = _snake[i].center();
+
+        switch(currdir){
+        case Direction::up:
+            position.ry() -= step;
+            if(position.ry() <= _space.top())
+                position.ry() += _space.height();
+            break;
+        case Direction::down:
+            position.ry() += step;
+            if(position.ry() >= (_space.bottom()+1))
+                position.ry() -= _space.height();
+            break;
+        case Direction::left:
+            position.rx() -= step;
+            if(position.rx() <= _space.left())
+                position.rx() += _space.width();
+            break;
+        case Direction::right:
+            position.rx() += step;
+            if(position.rx() >= (_space.right()+1))
+                position.rx() -= _space.width();
+            break;
+        default:
+            break;
+        }
+
+        _snake[i].moveCenter(position);
+    }
+}
+
+QVector<QRect> OpenGLWidget::CastSnake(qsizetype size, qsizetype fatness, Direction direction, QRect space){
+    QVector<QRect> snake;
+
+    qsizetype posx = QRandomGenerator::global()->bounded(space.left(), space.right()+1);
+    qsizetype posy = QRandomGenerator::global()->bounded(space.top(), space.bottom()+1);
+
+    snake.append(QRect(posx, posy, fatness, fatness));
+
+    for(int i=1; i<size ;i++){
+
+        switch(direction){
+        case Direction::down:
+            posy -= (fatness+1);
+            if(posy <= _space.top())
+                posy += _space.width();
+            break;
+        case Direction::right:
+            posx -= (fatness+1);
+            if(posx <= _space.left())
+                posx += _space.width();
+            break;
+        case Direction::up:
+            posy += (fatness+1);
+            if(posy >= _space.bottom())
+                posy -= _space.height();
+            break;
+        case Direction::left:
+            posx += (fatness+1);
+            if(posx >= (_space.right()+1))
+                posx -= _space.width();
+            break;
+        default:
+            break;
+        }
+
+        snake.append(QRect(posx, posy, fatness, fatness));
+    }
+
+    return snake;
+}
+
+void OpenGLWidget::TickTimeout(){
+
+    MoveSnake(1);
+
+    this->update();
 }
 
