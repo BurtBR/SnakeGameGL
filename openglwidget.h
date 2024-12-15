@@ -10,7 +10,7 @@ class OpenGLWidget : public QOpenGLWidget, protected QOpenGLFunctions{
     Q_OBJECT
 public:
     enum class Direction{
-        up,
+        up = 0,
         down,
         left,
         right
@@ -18,7 +18,8 @@ public:
 
 private:
     const QRect _space = QRect(0, 0, 100, 100);
-    QVector<QRect> _snake;
+    QVector<QRect> _snake, _obstacles;
+    QRect _food;
     QTimer *_timer = nullptr;
     OpenGLWidget::Direction _direction;
 
@@ -34,6 +35,9 @@ public:
 
 private slots:
     void TickTimeout();
+
+public slots:
+    void ChangeDirection(Direction dir);
 };
 
 #endif // OPENGLWIDGET_H

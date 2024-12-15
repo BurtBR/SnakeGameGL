@@ -23,9 +23,8 @@ void OpenGLWidget::initializeGL(){
 
     glOrtho(_space.left(), (_space.right()+1), _space.bottom()+1, (_space.top()), 1.0, -1.0);
     glClearColor(0.5,0.5,0.5,1.0);
-    //glPointSize(1);
 
-    _direction = Direction::right;
+    _direction = ((Direction)QRandomGenerator::global()->bounded(0,4));
     _snake = CastSnake(5, snakefatness, _direction, _space);
 
     if(!_timer){
@@ -78,6 +77,7 @@ void OpenGLWidget::paintGL(){
             break;
         }
 
+        // Body
         for(int i=1; i<_snake.size() ;i++){
             glVertex3i(_snake[i].left(), _snake[i].top(), 0);
             glVertex3i(_snake[i].left(), _snake[i].bottom()+1, 0);
@@ -177,5 +177,9 @@ void OpenGLWidget::TickTimeout(){
     MoveSnake(1);
 
     this->update();
+}
+
+void OpenGLWidget::ChangeDirection(Direction dir){
+    _direction = dir;
 }
 
