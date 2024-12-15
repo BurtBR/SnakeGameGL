@@ -22,7 +22,15 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+private slots:
+    void SetScore(int score);
+    void GameStopped();
+
+    void On_buttonStart_Clicked();
+
 signals:
     void ChangeSnakeDirection(OpenGLWidget::Direction);
+    void StartGame();
+    void StopGame();
 };
 #endif // MAINWINDOW_H

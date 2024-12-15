@@ -39,6 +39,11 @@ private slots:
 
 public slots:
     void ChangeDirection(Direction dir);
+    void StartGame();
+
+signals:
+    void SetScore(int score);
+    void GameStopped();
 };
 
 #endif // OPENGLWIDGET_H

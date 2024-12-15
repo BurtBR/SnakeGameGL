@@ -7,6 +7,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), _ui(new Ui::MainW
     _ui->setupUi(this);
 
     connect(this, &MainWindow::ChangeSnakeDirection, _ui->openGLWidget, &OpenGLWidget::ChangeDirection);
+    connect(this, &MainWindow::StartGame, _ui->openGLWidget, &OpenGLWidget::StartGame);
+
+    connect(_ui->openGLWidget, &OpenGLWidget::GameStopped, this, &MainWindow::GameStopped);
+    connect(_ui->openGLWidget, &OpenGLWidget::SetScore, this, &MainWindow::SetScore);
+
+    connect(_ui->buttonStart, &QToolButton::clicked, this, &MainWindow::On_buttonStart_Clicked);
 }
 
 MainWindow::~MainWindow(){
@@ -34,4 +40,17 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
     default:
         break;
     }
+}
+
+void MainWindow::SetScore(int score){
+    _ui->labelScore->setText("Score: " + QString::number(score));
+}
+
+void MainWindow::GameStopped(){
+    _ui->buttonStart->setText("Start");
+}
+
+void MainWindow::On_buttonStart_Clicked(){
+    _ui->buttonStart->setText("Stop");
+    emit StartGame();
 }

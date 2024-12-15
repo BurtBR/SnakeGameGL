@@ -26,17 +26,6 @@ void OpenGLWidget::initializeGL(){
 
     _direction = ((Direction)QRandomGenerator::global()->bounded(0,4));
     _snake = CastSnake(snakesize, snakefatness, _direction, _space);
-
-    if(!_timer){
-        try{
-            _timer = new QTimer;
-        }catch(...){
-            return;
-        }
-
-        connect(_timer, &QTimer::timeout, this, &OpenGLWidget::TickTimeout);
-        _timer->start(100);
-    }
 }
 
 void OpenGLWidget::paintGL(){
@@ -297,6 +286,26 @@ void OpenGLWidget::ChangeDirection(Direction dir){
         if(abs(_snake[0].center().y()-_snake[1].center().y()) >= _snake[0].height())
             _direction = dir;
         break;
+    }
+}
+
+void OpenGLWidget::StartGame(){
+    if(!_timer){
+        try{
+            _timer = new QTimer;
+        }catch(...){
+            return;
+        }
+
+        emit SetScore(_snake.size());
+
+        connect(_timer, &QTimer::timeout, this, &OpenGLWidget::TickTimeout);
+        _timer->start(100);
+    }else{
+        _timer->stop();
+        delete _timer;
+        _timer = nullptr;
+        emit GameStopped();
     }
 }
 
