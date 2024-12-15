@@ -45,7 +45,7 @@ void OpenGLWidget::paintGL(){
 
     if(_snake.size()){
         // Head
-        glColor3f(1.0, 0.0 ,0.0);
+        glColor3f(0.5, 0.0 ,0.0);
 
         glBegin(GL_TRIANGLES);
         switch(_direction){
@@ -136,48 +136,109 @@ void OpenGLWidget::MoveSnake(qsizetype step){
     if(!_snake.size())
         return;
 
-    Direction currdir = _direction;
     QPoint position;
 
-    for(int i=0; i<_snake.size() ;i++){
+    // Body
+    for(int i=(_snake.size()-1); i>0 ;i--){
+
         position = _snake[i].center();
 
-        switch(currdir){
+        switch(_bodyinertia[i]){
         case Direction::up:
             position.ry() -= step;
             if(position.ry() <= _space.top())
                 position.ry() += _space.height();
+            _snake[i].moveCenter(position);
+
+            if((_snake[i].center().y() - _snake[i-1].center().y()) == 0){
+                if((_snake[i].center().x() - _snake[i-1].center().x()) > 0)
+                    _bodyinertia[i] = Direction::left;
+                else
+                    _bodyinertia[i] = Direction::right;
+            }
             break;
         case Direction::down:
             position.ry() += step;
             if(position.ry() >= (_space.bottom()+1))
                 position.ry() -= _space.height();
+            _snake[i].moveCenter(position);
+
+            if((_snake[i].center().y() - _snake[i-1].center().y()) == 0){
+                if((_snake[i].center().x() - _snake[i-1].center().x()) > 0)
+                    _bodyinertia[i] = Direction::left;
+                else
+                    _bodyinertia[i] = Direction::right;
+            }
             break;
         case Direction::left:
             position.rx() -= step;
             if(position.rx() <= _space.left())
                 position.rx() += _space.width();
+            _snake[i].moveCenter(position);
+
+            if((_snake[i].center().x() - _snake[i-1].center().x()) == 0){
+                if((_snake[i].center().y() - _snake[i-1].center().y()) > 0)
+                    _bodyinertia[i] = Direction::up;
+                else
+                    _bodyinertia[i] = Direction::down;
+            }
             break;
         case Direction::right:
             position.rx() += step;
             if(position.rx() >= (_space.right()+1))
                 position.rx() -= _space.width();
+            _snake[i].moveCenter(position);
+
+            if((_snake[i].center().x() - _snake[i-1].center().x()) == 0){
+                if((_snake[i].center().y() - _snake[i-1].center().y()) > 0)
+                    _bodyinertia[i] = Direction::up;
+                else
+                    _bodyinertia[i] = Direction::down;
+            }
             break;
         default:
             break;
         }
-
-        _snake[i].moveCenter(position);
     }
+
+    // Head
+    position = _snake[0].center();
+    switch(_direction){
+    case Direction::up:
+        position.ry() -= step;
+        if(position.ry() <= _space.top())
+            position.ry() += _space.height();
+        break;
+    case Direction::down:
+        position.ry() += step;
+        if(position.ry() >= (_space.bottom()+1))
+            position.ry() -= _space.height();
+        break;
+    case Direction::left:
+        position.rx() -= step;
+        if(position.rx() <= _space.left())
+            position.rx() += _space.width();
+        break;
+    case Direction::right:
+        position.rx() += step;
+        if(position.rx() >= (_space.right()+1))
+            position.rx() -= _space.width();
+        break;
+    default:
+        break;
+    }
+    _snake[0].moveCenter(position);
 }
 
 QVector<QRect> OpenGLWidget::CastSnake(qsizetype size, qsizetype fatness, Direction direction, QRect space){
     QVector<QRect> snake;
-
     qsizetype posx = QRandomGenerator::global()->bounded(space.left(), space.right()+1);
     qsizetype posy = QRandomGenerator::global()->bounded(space.top(), space.bottom()+1);
 
+    _bodyinertia.clear();
+
     snake.append(QRect(posx, posy, fatness, fatness));
+    _bodyinertia.append(direction);
 
     for(int i=1; i<size ;i++){
 
@@ -207,6 +268,7 @@ QVector<QRect> OpenGLWidget::CastSnake(qsizetype size, qsizetype fatness, Direct
         }
 
         snake.append(QRect(posx, posy, fatness, fatness));
+        _bodyinertia.append(direction);
     }
 
     return snake;
@@ -220,6 +282,21 @@ void OpenGLWidget::TickTimeout(){
 }
 
 void OpenGLWidget::ChangeDirection(Direction dir){
-    _direction = dir;
+
+    if(_snake.size() < 2)
+        return;
+
+    switch(dir){
+    case Direction::up:
+    case Direction::down:
+        if(abs(_snake[0].center().x()-_snake[1].center().x()) >= _snake[0].width())
+            _direction = dir;
+        break;
+    case Direction::left:
+    case Direction::right:
+        if(abs(_snake[0].center().y()-_snake[1].center().y()) >= _snake[0].height())
+            _direction = dir;
+        break;
+    }
 }
 

@@ -19,6 +19,7 @@ public:
 private:
     const QRect _space = QRect(0, 0, 100, 100);
     QVector<QRect> _snake, _obstacles;
+    QVector<Direction> _bodyinertia;
     QRect _food;
     QTimer *_timer = nullptr;
     OpenGLWidget::Direction _direction;
