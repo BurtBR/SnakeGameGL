@@ -17,7 +17,7 @@ OpenGLWidget::~OpenGLWidget(){
 
 void OpenGLWidget::initializeGL(){
 
-    qsizetype snakefatness = 3;
+    qsizetype snakefatness = 3, snakesize = 5;
 
     initializeOpenGLFunctions();
 
@@ -25,7 +25,7 @@ void OpenGLWidget::initializeGL(){
     glClearColor(0.5,0.5,0.5,1.0);
 
     _direction = ((Direction)QRandomGenerator::global()->bounded(0,4));
-    _snake = CastSnake(5, snakefatness, _direction, _space);
+    _snake = CastSnake(snakesize, snakefatness, _direction, _space);
 
     if(!_timer){
         try{
@@ -50,27 +50,67 @@ void OpenGLWidget::paintGL(){
         glBegin(GL_TRIANGLES);
         switch(_direction){
         case Direction::right:
-            glVertex3i(_snake[0].left(), _snake[0].top(), 0);
-            glVertex3i(_snake[0].left(), _snake[0].bottom()+1, 0);
-            glVertex3i(_snake[0].right()+1, _snake[0].center().y()+1, 0);
+            if((_snake[0].x() + _snake[0].y()) % 2){
+                glVertex3i(_snake[0].left(), _snake[0].top(), 0);
+                glVertex3i(_snake[0].right()+1, _snake[0].top(), 0);
+                glVertex3i(_snake[0].left(), _snake[0].bottom()+1, 0);
+
+                glVertex3i(_snake[0].right()+1, _snake[0].bottom()+1, 0);
+                glVertex3i(_snake[0].left(), _snake[0].bottom()+1, 0);
+                glVertex3i(_snake[0].left(), _snake[0].top(), 0);
+            }else{
+                glVertex3i(_snake[0].left(), _snake[0].top(), 0);
+                glVertex3i(_snake[0].left(), _snake[0].bottom()+1, 0);
+                glVertex3i(_snake[0].right()+1, _snake[0].center().y()+1, 0);
+            }
             break;
 
         case Direction::left:
-            glVertex3i(_snake[0].right()+1, _snake[0].top(), 0);
-            glVertex3i(_snake[0].right()+1, _snake[0].bottom()+1, 0);
-            glVertex3i(_snake[0].left(), _snake[0].center().y()+1, 0);
+            if((_snake[0].x() + _snake[0].y()) % 2){
+                glVertex3i(_snake[0].left(), _snake[0].top(), 0);
+                glVertex3i(_snake[0].right()+1, _snake[0].top(), 0);
+                glVertex3i(_snake[0].right()+1, _snake[0].bottom()+1, 0);
+
+                glVertex3i(_snake[0].right()+1, _snake[0].bottom()+1, 0);
+                glVertex3i(_snake[0].left(), _snake[0].bottom()+1, 0);
+                glVertex3i(_snake[0].right()+1, _snake[0].top(), 0);
+            }else{
+                glVertex3i(_snake[0].right()+1, _snake[0].top(), 0);
+                glVertex3i(_snake[0].right()+1, _snake[0].bottom()+1, 0);
+                glVertex3i(_snake[0].left(), _snake[0].center().y()+1, 0);
+            }
             break;
 
         case Direction::down:
-            glVertex3i(_snake[0].left(), _snake[0].top(), 0);
-            glVertex3i(_snake[0].right()+1, _snake[0].top(), 0);
-            glVertex3i(_snake[0].center().x()+1, _snake[0].bottom()+1, 0);
+            if((_snake[0].x() + _snake[0].y()) % 2){
+                glVertex3i(_snake[0].left(), _snake[0].top(), 0);
+                glVertex3i(_snake[0].left(), _snake[0].bottom()+1, 0);
+                glVertex3i(_snake[0].right()+1, _snake[0].top(), 0);
+
+                glVertex3i(_snake[0].right()+1, _snake[0].top(), 0);
+                glVertex3i(_snake[0].right()+1, _snake[0].bottom()+1, 0);
+                glVertex3i(_snake[0].left(), _snake[0].top(), 0);
+            }else{
+                glVertex3i(_snake[0].left(), _snake[0].top(), 0);
+                glVertex3i(_snake[0].right()+1, _snake[0].top(), 0);
+                glVertex3i(_snake[0].center().x()+1 , _snake[0].bottom()+1, 0);
+            }
             break;
 
         case Direction::up:
-            glVertex3i(_snake[0].left(), _snake[0].bottom()+1, 0);
-            glVertex3i(_snake[0].right()+1, _snake[0].bottom()+1, 0);
-            glVertex3i(_snake[0].center().x()+1, _snake[0].top(), 0);
+            if((_snake[0].x() + _snake[0].y()) % 2){
+                glVertex3i(_snake[0].left(), _snake[0].top(), 0);
+                glVertex3i(_snake[0].left(), _snake[0].bottom()+1, 0);
+                glVertex3i(_snake[0].right()+1, _snake[0].bottom()+1, 0);
+
+                glVertex3i(_snake[0].right()+1, _snake[0].top(), 0);
+                glVertex3i(_snake[0].right()+1, _snake[0].bottom()+1, 0);
+                glVertex3i(_snake[0].left(), _snake[0].bottom()+1, 0);
+            }else{
+                glVertex3i(_snake[0].left(), _snake[0].bottom()+1, 0);
+                glVertex3i(_snake[0].right()+1, _snake[0].bottom()+1, 0);
+                glVertex3i(_snake[0].center().x()+1 , _snake[0].top(), 0);
+            }
             break;
 
         default:
