@@ -25,7 +25,7 @@ private:
     OpenGLWidget::Direction _direction;
     bool _dead = false;
     qsizetype _currentmove = 0;
-    QVector<QPair<qsizetype, QRect>> _stomach;
+    QVector<qsizetype> _stomach;
 
     void CastSnake(qsizetype size, qsizetype fatness);
     void CastObjects(qsizetype amount, QRect sizelimit);

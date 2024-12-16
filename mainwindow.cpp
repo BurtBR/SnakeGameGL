@@ -13,6 +13,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), _ui(new Ui::MainW
     connect(_ui->openGLWidget, &OpenGLWidget::SetScore, this, &MainWindow::SetScore);
 
     connect(_ui->buttonStart, &QToolButton::clicked, this, &MainWindow::On_buttonStart_Clicked);
+
+    this->setFocus();
 }
 
 MainWindow::~MainWindow(){
@@ -36,6 +38,10 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
     case Qt::Key_D:
     case Qt::Key_Right:
         emit ChangeSnakeDirection(OpenGLWidget::Direction::right);
+        break;
+    case Qt::Key_Space:
+        _ui->buttonStart->setText("Stop");
+        emit StartGame();
         break;
     default:
         break;

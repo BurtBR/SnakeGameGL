@@ -265,7 +265,7 @@ void OpenGLWidget::InitGame(){
 
     _direction = ((Direction)QRandomGenerator::global()->bounded(0,4));
     CastSnake(snakesize, snakefatness);
-    CastObjects(5, QRect(0, 0, 10, 10));
+    CastObjects(6, QRect(0, 0, 10, 10));
     CastFood(snakefatness);
 }
 
@@ -326,36 +326,7 @@ void OpenGLWidget::CastSnake(qsizetype size, qsizetype fatness){
     _bodyinertia.append(_direction);
 
     for(int i=1; i<size ;i++){
-
         AddPieceToBody();
-
-        /*switch(_direction){
-        case Direction::down:
-            posy -= (fatness+1);
-            if(posy <= _space.top())
-                posy += _space.width();
-            break;
-        case Direction::right:
-            posx -= (fatness+1);
-            if(posx <= _space.left())
-                posx += _space.width();
-            break;
-        case Direction::up:
-            posy += (fatness+1);
-            if(posy >= _space.bottom())
-                posy -= _space.height();
-            break;
-        case Direction::left:
-            posx += (fatness+1);
-            if(posx >= (_space.right()+1))
-                posx -= _space.width();
-            break;
-        default:
-            break;
-        }
-
-        _snake.append(QRect(posx, posy, fatness, fatness));
-        _bodyinertia.append(_direction);*/
     }
 }
 
@@ -407,13 +378,13 @@ void OpenGLWidget::TickTimeout(){
     }
 
     if(_snake[0].intersects(_food)){
-        _stomach.append(QPair<qsizetype, QRect>(_currentmove+(_snake.size()*(_snake[0].width()+1)), _snake[0]));
+        _stomach.append(_currentmove+(_snake.size()*(_snake[0].width()+1)));
         CastFood(_food.width());
         emit SetScore(_bodyinertia.size());
     }
 
     while(_stomach.size()){
-        if(_stomach[0].first <= _currentmove){
+        if(_stomach[0] <= _currentmove){
             AddPieceToBody();
             _stomach.removeFirst();
         }else

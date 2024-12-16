@@ -10,8 +10,15 @@
     <height>674</height>
    </rect>
   </property>
+  <property name="focusPolicy">
+   <enum>Qt::FocusPolicy::StrongFocus</enum>
+  </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Worm GL</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="Resource.qrc">
+    <normaloff>:/Images/SoftwareIcon.png</normaloff>:/Images/SoftwareIcon.png</iconset>
   </property>
   <property name="styleSheet">
    <string notr="true">QLabel{
@@ -142,6 +149,8 @@ QToolButton{
    <header>openglwidget.h</header>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="Resource.qrc"/>
+ </resources>
  <connections/>
 </ui>
