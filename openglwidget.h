@@ -37,6 +37,8 @@ private:
     bool BitAss();
     void StopGame();
 
+    void AddPieceToBody();
+
 public:
     OpenGLWidget(QWidget *parent);
     ~OpenGLWidget();

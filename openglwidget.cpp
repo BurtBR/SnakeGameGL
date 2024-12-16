@@ -327,7 +327,9 @@ void OpenGLWidget::CastSnake(qsizetype size, qsizetype fatness){
 
     for(int i=1; i<size ;i++){
 
-        switch(_direction){
+        AddPieceToBody();
+
+        /*switch(_direction){
         case Direction::down:
             posy -= (fatness+1);
             if(posy <= _space.top())
@@ -353,7 +355,7 @@ void OpenGLWidget::CastSnake(qsizetype size, qsizetype fatness){
         }
 
         _snake.append(QRect(posx, posy, fatness, fatness));
-        _bodyinertia.append(_direction);
+        _bodyinertia.append(_direction);*/
     }
 }
 
@@ -406,14 +408,13 @@ void OpenGLWidget::TickTimeout(){
 
     if(_snake[0].intersects(_food)){
         _stomach.append(QPair<qsizetype, QRect>(_currentmove+(_snake.size()*(_snake[0].width()+1)), _snake[0]));
-        _bodyinertia.append(_bodyinertia[0]);
         CastFood(_food.width());
         emit SetScore(_bodyinertia.size());
     }
 
     while(_stomach.size()){
         if(_stomach[0].first <= _currentmove){
-            _snake.append(_stomach[0].second);
+            AddPieceToBody();
             _stomach.removeFirst();
         }else
             break;
@@ -469,3 +470,41 @@ void OpenGLWidget::StopGame(){
     }
 }
 
+void OpenGLWidget::AddPieceToBody(){
+
+    if(!_snake.size())
+        return;
+
+    QRect piece = _snake.last();
+
+    qsizetype posx = piece.x(), posy = piece.y(), fatness = piece.width();
+
+    _bodyinertia.append(_bodyinertia.last());
+
+    switch(_bodyinertia.last()){
+    case Direction::down:
+        posy -= (fatness+1);
+        if(posy <= _space.top())
+            posy += _space.width();
+        break;
+    case Direction::right:
+        posx -= (fatness+1);
+        if(posx <= _space.left())
+            posx += _space.width();
+        break;
+    case Direction::up:
+        posy += (fatness+1);
+        if(posy >= _space.bottom())
+            posy -= _space.height();
+        break;
+    case Direction::left:
+        posx += (fatness+1);
+        if(posx >= (_space.right()+1))
+            posx -= _space.width();
+        break;
+    default:
+        break;
+    }
+
+    _snake.append(QRect(posx, posy, fatness, fatness));
+}
