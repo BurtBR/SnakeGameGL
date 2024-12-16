@@ -23,8 +23,19 @@ private:
     QRect _food;
     QTimer *_timer = nullptr;
     OpenGLWidget::Direction _direction;
+    bool _dead = false;
+    qsizetype _currentmove = 0;
+    QVector<QPair<qsizetype, QRect>> _stomach;
 
+    void CastSnake(qsizetype size, qsizetype fatness);
+    void CastObjects(qsizetype amount, QRect sizelimit);
+    void CastFood(qsizetype size);
     void MoveSnake(qsizetype step);
+    void InitGame();
+    bool CollisionWithSnake(const QRect &object);
+    bool CollisionWithObjects(const QRect &object);
+    bool BitAss();
+    void StopGame();
 
 public:
     OpenGLWidget(QWidget *parent);
@@ -32,7 +43,6 @@ public:
 
     void initializeGL();
     void paintGL();
-    QVector<QRect> CastSnake(qsizetype size, qsizetype fatness, Direction direction, QRect space);
 
 private slots:
     void TickTimeout();

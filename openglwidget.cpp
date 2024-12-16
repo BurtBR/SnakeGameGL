@@ -16,19 +16,19 @@ OpenGLWidget::~OpenGLWidget(){
 }
 
 void OpenGLWidget::initializeGL(){
-
-    qsizetype snakefatness = 3, snakesize = 5;
-
     initializeOpenGLFunctions();
 
     glOrtho(_space.left(), (_space.right()+1), _space.bottom()+1, (_space.top()), 1.0, -1.0);
-    glClearColor(0.5,0.5,0.5,1.0);
 
-    _direction = ((Direction)QRandomGenerator::global()->bounded(0,4));
-    _snake = CastSnake(snakesize, snakefatness, _direction, _space);
+    InitGame();
 }
 
 void OpenGLWidget::paintGL(){
+
+    if(_dead)
+        glClearColor(0.8,0.0,0.0,1.0);
+    else
+        glClearColor(0.5,0.5,0.5,1.0);
 
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -118,6 +118,39 @@ void OpenGLWidget::paintGL(){
         }
         glEnd();
     }
+
+    // Obstacles
+    if(_obstacles.size()){
+
+        glColor3f(0.1, 0.1 ,0.1);
+        glBegin(GL_TRIANGLES);
+
+        for(int i=0; i<_obstacles.size() ;i++){
+            glVertex3i(_obstacles[i].left(), _obstacles[i].top(), 0);
+            glVertex3i(_obstacles[i].left(), _obstacles[i].bottom()+1, 0);
+            glVertex3i(_obstacles[i].right()+1, _obstacles[i].top(), 0);
+
+            glVertex3i(_obstacles[i].left(), _obstacles[i].bottom()+1, 0);
+            glVertex3i(_obstacles[i].right()+1, _obstacles[i].bottom()+1, 0);
+            glVertex3i(_obstacles[i].right()+1, _obstacles[i].top(), 0);
+        }
+
+        glEnd();
+    }
+
+    // Food
+    glColor3f(0.0, 0.4 ,0.0);
+    glBegin(GL_TRIANGLES);
+
+    glVertex3i(_food.left(), _food.top(), 0);
+    glVertex3i(_food.left(), _food.bottom()+1, 0);
+    glVertex3i(_food.right()+1, _food.top(), 0);
+
+    glVertex3i(_food.left(), _food.bottom()+1, 0);
+    glVertex3i(_food.right()+1, _food.bottom()+1, 0);
+    glVertex3i(_food.right()+1, _food.top(), 0);
+
+    glEnd();
 }
 
 void OpenGLWidget::MoveSnake(qsizetype step){
@@ -126,6 +159,8 @@ void OpenGLWidget::MoveSnake(qsizetype step){
         return;
 
     QPoint position;
+
+    _currentmove += step;
 
     // Body
     for(int i=(_snake.size()-1); i>0 ;i--){
@@ -217,21 +252,82 @@ void OpenGLWidget::MoveSnake(qsizetype step){
         break;
     }
     _snake[0].moveCenter(position);
+    _bodyinertia[0] = _direction;
 }
 
-QVector<QRect> OpenGLWidget::CastSnake(qsizetype size, qsizetype fatness, Direction direction, QRect space){
-    QVector<QRect> snake;
-    qsizetype posx = QRandomGenerator::global()->bounded(space.left(), space.right()+1);
-    qsizetype posy = QRandomGenerator::global()->bounded(space.top(), space.bottom()+1);
+void OpenGLWidget::InitGame(){
 
+    qsizetype snakefatness = 3, snakesize = 5;
+
+    _dead = false;
+    _currentmove= 0;
+    _stomach.clear();
+
+    _direction = ((Direction)QRandomGenerator::global()->bounded(0,4));
+    CastSnake(snakesize, snakefatness);
+    CastObjects(5, QRect(0, 0, 10, 10));
+    CastFood(snakefatness);
+}
+
+bool OpenGLWidget::CollisionWithSnake(const QRect &object){
+
+    for(int i=0; i<_snake.size() ;i++){
+        if(_snake[i].intersects(object))
+            return true;
+    }
+
+    return false;
+}
+
+bool OpenGLWidget::CollisionWithObjects(const QRect &object){
+    for(int i=0; i<_obstacles.size() ;i++){
+        if(_obstacles[i].intersects(object))
+            return true;
+    }
+
+    return false;
+}
+
+bool OpenGLWidget::BitAss(){
+
+    QRect mouth;
+
+    switch(_direction){
+    case Direction::up:
+        mouth = QRect(_snake[0].topLeft(), QSize(_snake[0].width()/2, _snake[0].height()/2));
+            break;
+    case Direction::down:
+        mouth = QRect(_snake[0].left(), _snake[0].center().y()+1, _snake[0].width(), _snake[0].height()/2);
+        break;
+    case Direction::left:
+        mouth = QRect(_snake[0].left(), _snake[0].top(), _snake[0].width()/2, _snake[0].height());
+        break;
+    case Direction::right:
+        mouth = QRect(_snake[0].center().x(), _snake[0].top(), _snake[0].width()/2, _snake[0].height());
+        break;
+    }
+
+    for(int i=1; i<_snake.size() ;i++){
+        if(_snake[i].contains(mouth))
+            return true;
+    }
+
+    return false;
+}
+
+void OpenGLWidget::CastSnake(qsizetype size, qsizetype fatness){
+    qsizetype posx = QRandomGenerator::global()->bounded(_space.left(), _space.right()+1);
+    qsizetype posy = QRandomGenerator::global()->bounded(_space.top(), _space.bottom()+1);
+
+    _snake.clear();
     _bodyinertia.clear();
 
-    snake.append(QRect(posx, posy, fatness, fatness));
-    _bodyinertia.append(direction);
+    _snake.append(QRect(posx, posy, fatness, fatness));
+    _bodyinertia.append(_direction);
 
     for(int i=1; i<size ;i++){
 
-        switch(direction){
+        switch(_direction){
         case Direction::down:
             posy -= (fatness+1);
             if(posy <= _space.top())
@@ -256,18 +352,72 @@ QVector<QRect> OpenGLWidget::CastSnake(qsizetype size, qsizetype fatness, Direct
             break;
         }
 
-        snake.append(QRect(posx, posy, fatness, fatness));
-        _bodyinertia.append(direction);
+        _snake.append(QRect(posx, posy, fatness, fatness));
+        _bodyinertia.append(_direction);
     }
+}
 
-    return snake;
+void OpenGLWidget::CastObjects(qsizetype amount, QRect sizelimit){
+
+    QRect newobject;
+    qsizetype posx, posy, width, height;
+
+    _obstacles.clear();
+
+    for(qsizetype i=0; i<amount ;i++){
+
+        do{
+            posx = QRandomGenerator::global()->bounded(_space.left(), _space.right()+1);
+            posy = QRandomGenerator::global()->bounded(_space.top(), _space.bottom()+1);
+            width = QRandomGenerator::global()->bounded(1, sizelimit.width()+1);
+            height = QRandomGenerator::global()->bounded(1, sizelimit.height()+1);
+
+            newobject = QRect(posx, posy, width, height);
+        }while(CollisionWithSnake(newobject));
+
+        _obstacles.append(newobject);
+    }
+}
+
+void OpenGLWidget::CastFood(qsizetype size){
+
+    qsizetype posx, posy;
+
+    do{
+        posx = QRandomGenerator::global()->bounded(_space.left()+size, _space.right()+1-size);
+        posy = QRandomGenerator::global()->bounded(_space.top()+size, _space.bottom()+1-size);
+
+        _food = QRect(posx, posy, size, size);
+    }while(CollisionWithSnake(_food) || CollisionWithObjects(_food));
 }
 
 void OpenGLWidget::TickTimeout(){
 
-    MoveSnake(1);
+    if(_dead)
+        return;
 
+    MoveSnake(1);
     this->update();
+
+    if(CollisionWithObjects(_snake[0]) || BitAss()){
+        _dead = true;
+        StopGame();
+    }
+
+    if(_snake[0].intersects(_food)){
+        _stomach.append(QPair<qsizetype, QRect>(_currentmove+(_snake.size()*(_snake[0].width()+1)), _snake[0]));
+        _bodyinertia.append(_bodyinertia[0]);
+        CastFood(_food.width());
+        emit SetScore(_bodyinertia.size());
+    }
+
+    while(_stomach.size()){
+        if(_stomach[0].first <= _currentmove){
+            _snake.append(_stomach[0].second);
+            _stomach.removeFirst();
+        }else
+            break;
+    }
 }
 
 void OpenGLWidget::ChangeDirection(Direction dir){
@@ -294,14 +444,24 @@ void OpenGLWidget::StartGame(){
         try{
             _timer = new QTimer;
         }catch(...){
+            emit GameStopped();
             return;
         }
+
+        if(_dead)
+            InitGame();
 
         emit SetScore(_snake.size());
 
         connect(_timer, &QTimer::timeout, this, &OpenGLWidget::TickTimeout);
         _timer->start(100);
     }else{
+        StopGame();
+    }
+}
+
+void OpenGLWidget::StopGame(){
+    if(_timer){
         _timer->stop();
         delete _timer;
         _timer = nullptr;
